@@ -2,6 +2,7 @@
 
 namespace Hcode;
 
+//Namespace nativo do Rain TPL
 use Rain\Tpl;
 
 class Page {
@@ -12,12 +13,12 @@ class Page {
 		"data"=>[]
 	];
 	
-	public function __construct($opts = array()){
+	public function __construct($opts = array(), $tpl_dir = "/views/"){
 		
 		$this->options = array_merge($this->defaults, $opts);
 		// config
-		$config = array(
-			"tpl_dir"       => $_SERVER["DOCUMENT_ROOT"]. "/views/",
+		$config = array(	//$_SERVER DOCUMENT_ROOT (variável de ambiente) pega o diretório ROOT dentro do array superglobal $_SERVER
+			"tpl_dir"       => $_SERVER["DOCUMENT_ROOT"]. $tpl_dir,
 			"cache_dir"     => $_SERVER["DOCUMENT_ROOT"]. "/views-cache/",
 			"debug"         => false // set to false to improve the speed
 		   );
