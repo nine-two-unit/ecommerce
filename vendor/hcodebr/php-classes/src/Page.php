@@ -19,7 +19,8 @@ class Page {
 	
 	public function __construct($opts = array(), $tpl_dir = "/views/"){
 		
-		$this->options = array_merge($this->defaults, $opts);
+		$this->options = array_merge($this->defaults, $opts);//array_merge mescla os arrays $defaults e $opts. Quando $opts não é setado, $defaults prevalece. Pela ordem do merge, se o $opts estiver setado, ele prevalece.
+		
 		// config
 		$config = array(	//$_SERVER DOCUMENT_ROOT (variável de ambiente) pega o diretório ROOT dentro do array superglobal $_SERVER
 			"tpl_dir"       => $_SERVER["DOCUMENT_ROOT"]. $tpl_dir,

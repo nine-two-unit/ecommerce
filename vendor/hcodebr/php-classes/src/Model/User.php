@@ -7,35 +7,41 @@ use \Hcode\Model;
 
 class User extends Model {
 	
+	//Constante SESSION recupera os dados do array User
 	const SESSION = "User";
 	
+	//Método de login, recebe $login e $password pelo post.
 	public static function login($login, $password)
 	{
 		
 		$sql = new Sql();
 		
+		//Consulta no login infromado
 		$results = $sql->select("SELECT * FROM tb_users WHERE deslogin = :LOGIN", array(
 			":LOGIN"=>$login
 		));
 		
+		//Verifica se o resultado retornou algo ou está vazio
 		if (count($results) === 0)
 		{
-			throw new \Exception("Usuário inexistente ou senha inválida!");
+			throw new \Exception("Usuário inexistente ou senha inválida!");//A contra-barra na Exception é necessária para voltar ao escopo principal
 		}
 		
+		//Armazena em $data os results retornado no select ao banco
 		$data = $results[0];
 		
+		//Função password_verify compara os hashs e retorna um booleano, no exemplo utilizando os valores da chave "despassword" armazenada no array $data
 		if (password_verify($password, $data["despassword"]) === true)
 		{
 			
 			$user = new User();
 			
+			//Método para detectar e separar campos e valores do array recebido da consulta SQL
 			$user->setData($data);
 			
 			//Criação da sessão de login
 			$_SESSION[User::SESSION] = $user->getValues();
-			//print_r($_SESSION);
-			
+
 			return $user;
 			
 		} else {
@@ -47,20 +53,22 @@ class User extends Model {
 		
 	}
 	
-	public static function verifyLogin($inadmin = true)
+	//Método de verificação do login
+	public static function verifyLogin($inadmin = true) 
 	{
 		
 		if(
-			!isset($_SESSION[User::SESSION])
+			!isset($_SESSION[User::SESSION]) //Se a sessão não foi definida
 			||
-			!$_SESSION[User::SESSION]
+			!$_SESSION[User::SESSION] //Se a sessão estiver vazia ou falsa
 			||
-			!(int)$_SESSION[User::SESSION]["iduser"] > 0
+			!(int)$_SESSION[User::SESSION]["iduser"] > 0 //Verifica se o ID do usuário é um int maior que 0
 			||
-			(bool)$_SESSION[User::SESSION]["inadmin"] !== $inadmin
+			(bool)$_SESSION[User::SESSION]["inadmin"] !== $inadmin //Verifica se o usuário tem permissão de admin
 			
 		){
 			
+			//Retorna ao login caso algumas das condições do If sejam satisfeitas
 			header("Location: /admin/login");
 			exit;
 		}
