@@ -9,7 +9,11 @@ class Page {
 	
 	private $tpl;
 	private $options = [];
+	
+	//atributo defaults envia as opções header e footer como true por padrão, para que sejam carregadas na validação antes do draw
 	private $defaults = [
+		"header"=>true,
+		"footer"=>true,
 		"data"=>[]
 	];
 	
@@ -29,7 +33,7 @@ class Page {
 
 		$this->setData($this->options["data"]);
 		
-		$this->tpl->draw("header");	
+		if ($this->options["header"] === true) $this->tpl->draw("header");	
 	
 	}
 	
@@ -52,7 +56,7 @@ class Page {
 	
 	public function __destruct(){
 		
-		$this->tpl->draw("footer");
+		if ($this->options["footer"] === true) $this->tpl->draw("footer");
 		
 	}
 }
