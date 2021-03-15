@@ -4,11 +4,18 @@ namespace Hcode\Model;
 
 use \Hcode\DB\Sql;
 use \Hcode\Model;
+use \Hcode\Mailer;
 
 class User extends Model {
 	
 	//Constante SESSION recupera os dados do array User
 	const SESSION = "User";
+	
+	//1ª Constante segredo da encriptação
+	const SECRET = "Electr1c-5t@r*92";
+	
+	//2ª Constante segredo da encriptação
+	const SECRET_II = "Pr0ton+Elctr0n+-";
 	
 	//Método de login, recebe $login e $password pelo post.
 	public static function login($login, $password)
@@ -75,6 +82,7 @@ class User extends Model {
 		
 	}
 	
+	//Método de logout
 	public static function logout()
 	{
 		
@@ -82,6 +90,7 @@ class User extends Model {
 	
 	}
 	
+	//Método de listagem de usuários
 	public static function listAll()
 	{
 		
@@ -91,6 +100,7 @@ class User extends Model {
 		
 	}
 	
+	//Método para salvar novos logins no DB
 	public function save()
 	{
 		
@@ -104,11 +114,12 @@ class User extends Model {
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()		
 		));
-		
+		//O método setData contido na classe Model é chamado na execução da rota no arquivo index.php. Ele se encarrega de chamar os setters gerados dinamicamente no momento da execução e o método mágico __call os executa e seta os atributos. Os getters são chamados na execução do método save e os valores são passados para o select.
 		$this->setData($results[0]);
 		
 	}
 	
+	//Recupera ID de usuário
 	public function get($iduser)
 	{
 		
@@ -122,6 +133,7 @@ class User extends Model {
 		
 	}
 	
+	//Método de edição de usuários no banco
 	public function update()
 	{
 		
@@ -141,6 +153,7 @@ class User extends Model {
 		
 	}
 	
+	//Método de exclusão de usuários no banco
 	public function delete()
 	{
 		
@@ -152,6 +165,143 @@ class User extends Model {
 		
 	}
 	
+	//Método para recuperação de senha via e-mail	
+	public static function getForgot($email)
+	{
+		
+		//Verifica se o e-mail existe no banco
+		$sql = new Sql();
+		
+		$results = $sql->select("
+		SELECT * 
+		FROM tb_persons a 
+		INNER JOIN tb_users b USING(idperson)
+		WHERE a.desemail = :email
+		", array(
+		":email"=>$email
+		));
+		
+		if (count($results) === 0) {
+			
+			throw new \Exception("Não foi possível recuperar a senha!");
+			
+		} else {
+			
+			$data = $results[0];
+			
+			$results2 = $sql->select("CALL sp_userspasswordsrecoveries_create(:iduser, :desip)", array(
+				":iduser"=>$data["iduser"],
+				":desip"=>$_SERVER["REMOTE_ADDR"]			
+			));
+			
+			//Sem resultados retornados, estoura um erro não específico
+			if(count($results2) === 0){
+				throw new \Exception("Não foi possível recuperar a senha!");
+				
+			} else {
+				
+				$dataRecovery = $results2[0];
+				
+				//Geração do código criptografado
+				
+				//Base64 é utilizado para converter os caracteres ilegíveis em texto, para que nenhum seja perdido
+				$code = base64_encode(openssl_encrypt(
+					$dataRecovery["idrecovery"],
+					'AES-128-CBC',
+					User::SECRET,
+					0,
+					User::SECRET_II					
+				));
+				
+				//Link gerado com ocódigo de recuperação
+				$link = "http://www.electricstar.com.br/admin/forgot/reset?code=$code";
+				
+				//Construção do e-mail utilizando a classe Mailer
+				$mailer = new Mailer($data["desemail"], $data["desperson"], "Redefinir Senha da Electric Star Store", "forgot", array(
+					"name"=>$data["desperson"],
+					"link"=>$link
+				));
+				
+				//Envio do e-mail
+				$mailer->send();
+				
+				return $data;
+				
+				
+				}
+			
+			
+		}
+	}
+	
+	//Método para validar o hash do link
+	public static function validForgotDecrypt($code)
+	{
+		
+		//Decodifica e decripta o idrecovery
+		$idrecovery = openssl_decrypt(
+		base64_decode($code),
+		'AES-128-CBC',
+		User::SECRET,
+		0,
+		User::SECRET_II					
+	);
+	
+	$sql = new Sql();
+	
+	//Consulta no banco o idrecovery, se a data de recovery é NULL e se a data de registro tem menos de uma hora
+	$results = $sql->select("
+		SELECT * 
+		FROM db_ecommerce.tb_userspasswordsrecoveries a 
+		INNER JOIN tb_users b USING(iduser) 
+		INNER JOIN tb_persons c USING(idperson) 
+		WHERE 
+			a.idrecovery = :idrecovery 
+			AND 
+			a.dtrecovery IS NULL 
+			AND 
+			DATE_ADD(a.dtregister, INTERVAL 1 HOUR) >= NOW();	
+	", array(
+		":idrecovery"=>$idrecovery
+	));
+	
+	if (count($results) === 0){
+		
+		throw new \Exception("Não foi possível recuperar a senha.");
+	
+	} else {
+		
+		return $results[0];
+		
+		}
+	
+	}
+	
+	//Método que atualiza a dtrecovery a partir do momento que o usuário seta a nova senha
+	public static function setForgotUsed($idrecovery)
+	{
+		
+		$sql = new Sql();
+		
+		$sql->query("UPDATE tb_userspasswordsrecoveries SET dtrecovery = NOW() WHERE idrecovery = :idrecovery", array(
+			":idrecovery"=>$idrecovery
+		));
+		
+	}
+	
+	//Método para realizar o update da senha redefinida no banco
+	public function setPassword($password)
+	{
+		
+		$sql = new Sql();
+		
+		$sql->query("UPDATE tb_users SET despassword = :password WHERE iduser = :iduser", array(
+			":password"=>$password,
+			":iduser"=>$this->getiduser()		
+		));
+	}
+	
+		
 }
 
 ?>

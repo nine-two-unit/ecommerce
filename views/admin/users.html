@@ -35,9 +35,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {loop="$users"}
+                  {loop="$users"} <!-- laço de repetição do rainTPL, utilizando o array $users-->
                   <tr>
-                    <td>{$value.iduser}</td>
+                    <td>{$value.iduser}</td> <!-- $value representa o valor da chave do array -->
                     <td>{$value.desperson}</td>
                     <td>{$value.desemail}</td>
                     <td>{$value.deslogin}</td/>

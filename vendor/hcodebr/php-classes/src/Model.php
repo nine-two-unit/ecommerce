@@ -38,9 +38,14 @@ class Model {
 		
 		foreach ($data as $key => $value) {
 			
+		// PERSONALIZADO - PARAR GUARDAR A SENHA COMO HASH NO SETTER
+		if($key === "despassword") {
+			$value = password_hash($value, PASSWORD_BCRYPT, ["cost"=>12]);
+		}
 			// Chamando o método de uma forma dinâmica. Se utiliza entre chaves uma string referenciando o nome do método
 			$this->{"set".$key}($value);
 			
+
 		}
 		
 		

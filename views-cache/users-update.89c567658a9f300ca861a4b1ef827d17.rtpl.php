@@ -36,6 +36,10 @@
               <label for="desemail">E-mail</label>
               <input type="email" class="form-control" id="desemail" name="desemail" placeholder="Digite o e-mail" value="<?php echo htmlspecialchars( $user["desemail"], ENT_COMPAT, 'UTF-8', FALSE ); ?>">
             </div>
+            <div class="form-group">
+              <label for="despassword">Senha</label>
+              <input type="password" class="form-control" id="despassword" name="despassword" placeholder="Digite a senha" value="<?php echo htmlspecialchars( $user["despassword"], ENT_COMPAT, 'UTF-8', FALSE ); ?>">
+            </div>
             <div class="checkbox">
               <label>
                 <input type="checkbox" name="inadmin" value="1" <?php if( $user["inadmin"] == 1 ){ ?>checked<?php } ?>> Acesso de Administrador
