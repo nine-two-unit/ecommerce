@@ -6,6 +6,7 @@ use \Slim\Slim;
 use \Hcode\Page;
 use \Hcode\PageAdmin;
 use \Hcode\Model\User;
+use \Hcode\Model\Category;
 
 $app = new Slim();
 
@@ -134,6 +135,9 @@ $app->post('/admin/users/create', function(){
 	
 	$user = new User();
 	
+	//Método personalizado para criptografar a senha em hash 
+	$user->hashPass();
+	
 	//Verificação da opção inadmin. Se for definido o valor é 1, senão é 0.
 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
 	
@@ -152,6 +156,9 @@ $app->post('/admin/users/:iduser', function($iduser){
 	User::verifyLogin();
 	
 	$user = new User();
+	
+	//Método personalizado para criptografar a senha em hash 
+	$user->hashPass();
 	
 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
 	
@@ -238,7 +245,99 @@ $app->post("/admin/forgot/reset", function(){
 	
 });
 
+//Rota para página de categorias no admin
+$app->get("/admin/categories", function(){
+	
+	User::verifyLogin();
+	
+	$categories = Category::listAll();
+	
+	$page = new PageAdmin();
+	
+	$page->setTpl("categories", [
+		"categories"=>$categories
+	]);
+	
+});
 
+//Rota para a página de cadastro de categoria
+$app->get("/admin/categories/create", function(){
+	
+	User::verifyLogin();
+	
+	$page = new PageAdmin();
+	
+	$page->setTpl("categories-create");
+	
+});
+
+//Método de inserção de nova categoria no banco
+$app->post("/admin/categories/create", function(){
+	
+	User::verifyLogin();
+	
+	$category = new Category();
+	
+	$category->setData($_POST);
+
+	$category->save();
+	
+	header("Location: /admin/categories");
+	
+	exit;
+	
+});
+
+//Método para exclusão de categoria
+$app->get("/admin/categories/:idcategory/delete", function($idcategory){
+	
+	User::verifyLogin();
+	
+	$category = new Category();
+	
+	$category->get((int)$idcategory);
+	
+	$category->delete();
+	
+	header("Location: /admin/categories");
+	
+	exit;
+});
+
+//Rota para página de edição das categorias
+$app->get("/admin/categories/:idcategory", function($idcategory){
+	
+	User::verifyLogin();
+
+	$category = new Category();
+	
+	$category->get((int)$idcategory);
+	
+	$page = new PageAdmin();
+	
+	$page->setTpl("categories-update", [
+		"category"=>$category->getValues()
+	]);
+
+});
+
+$app->post("/admin/categories/:idcategory", function($idcategory){
+	
+	User::verifyLogin();
+
+	$category = new Category();
+	
+	$category->get((int)$idcategory);
+	
+	$category->setData($_POST);
+	
+	$category->save();
+	
+	header("Location: /admin/categories");
+	
+	exit;
+
+});
 
 //Execução do Slim
 $app->run();

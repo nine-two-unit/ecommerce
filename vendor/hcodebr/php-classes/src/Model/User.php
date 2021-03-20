@@ -301,6 +301,13 @@ class User extends Model {
 		));
 	}
 	
+	//Método para criptografar a senha em hash 
+    public static function hashPass()
+    {
+        
+        $_POST["despassword"] = password_hash($_POST["despassword"], PASSWORD_BCRYPT, ["cost"=>12]);
+
+    }
 		
 }
 

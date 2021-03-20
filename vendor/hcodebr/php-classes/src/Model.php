@@ -20,7 +20,7 @@ class Model {
 			
 			//Case get pega a variável privada $values e procura o campo $fieldName dentro dela, encontrado é apenas retornada
 			case "get":
-				return $this->values[$fieldName];
+				return (isset($this->values[$fieldName])) ? $this->values[$fieldName] : NULL;
 			break;
 			
 			//Case set pega procura na variável privada $values, o campo $fieldname e atribui o valor que está chegando na posição 0 de $args
@@ -39,9 +39,9 @@ class Model {
 		foreach ($data as $key => $value) {
 			
 		// PERSONALIZADO - PARAR GUARDAR A SENHA COMO HASH NO SETTER
-		if($key === "despassword") {
+	/*	if($key === "despassword") {
 			$value = password_hash($value, PASSWORD_BCRYPT, ["cost"=>12]);
-		}
+		}*/
 			// Chamando o método de uma forma dinâmica. Se utiliza entre chaves uma string referenciando o nome do método
 			$this->{"set".$key}($value);
 			
