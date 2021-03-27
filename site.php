@@ -11,6 +11,7 @@
 use \Hcode\Page;
 use \Hcode\Model\Product;
 use \Hcode\Model\Category;
+use \Hcode\Model\Cart;
 
 //Rota para a homepage
 $app->get('/', function() {
@@ -59,7 +60,7 @@ $app->get("/categories/:idcategory", function($idcategory){
 	
 });
 
-
+//Rota para páginas dos detalhes dos produtos
 $app->get("/products/:desurl", function($desurl){
 	
 	$product = new Product();
@@ -77,5 +78,17 @@ $app->get("/products/:desurl", function($desurl){
 	exit;
 	
 });
+
+//Rota para o carrinho de compras
+$app->get("/cart", function(){
+	
+	$cart = Cart::getFromSession();
+	
+	$page = new Page();
+	
+	$page->setTpl("cart");
+	
+});
+
 
 ?>

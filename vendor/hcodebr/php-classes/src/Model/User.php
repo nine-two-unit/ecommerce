@@ -17,6 +17,54 @@ class User extends Model {
 	//2ª Constante segredo da encriptação
 	const SECRET_II = "Pr0ton+Elctr0n+-";
 	
+	//Método que retorna o objeto usuário se o usuário está logado
+	public static function getFromSession()
+	{
+			
+		$user = new User();
+		
+		if(isset($_SESSION[User::SESSION]) && $_SESSION[User::SESSION]["iduser"] > 0){
+			
+			$user->setData($_SESSION[User::SESSION]);
+			
+		}
+		
+		return $user;
+			
+	}
+	
+	//Método para verificar login
+	public static function checkLogin($inadmin = true)
+	{
+		if(
+			!isset($_SESSION[User::SESSION]) //Se a sessão não foi definida
+			||
+			!$_SESSION[User::SESSION] //Se a sessão estiver vazia ou falsa
+			||
+			!(int)$_SESSION[User::SESSION]["iduser"] > 0 //Verifica se o ID do usuário é um int maior que 0
+		){
+			//Usuário não está logado
+			return false;
+			
+		} else {
+			
+			//Verifica uma rota da administração
+			if($inadmin === true && (bool)$_SESSION[User::SESSION]["inadmin"] === true){
+				
+				return true;
+				
+			} else if ($inadmin === false){
+				
+				return true;
+				
+			} else {
+				
+				return false;
+			}
+		}
+		
+	}
+	
 	//Método de login, recebe $login e $password pelo post.
 	public static function login($login, $password)
 	{
@@ -48,7 +96,9 @@ class User extends Model {
 			
 			//Criação da sessão de login
 			$_SESSION[User::SESSION] = $user->getValues();
-
+			
+			/*var_dump($_SESSION);
+			exit;*/
 			return $user;
 			
 		} else {
@@ -64,6 +114,9 @@ class User extends Model {
 	public static function verifyLogin($inadmin = true) 
 	{
 		
+		/*if(User::checkLogin($inadmin)){
+			*/
+			
 		if(
 			!isset($_SESSION[User::SESSION]) //Se a sessão não foi definida
 			||
@@ -71,8 +124,7 @@ class User extends Model {
 			||
 			!(int)$_SESSION[User::SESSION]["iduser"] > 0 //Verifica se o ID do usuário é um int maior que 0
 			||
-			(bool)$_SESSION[User::SESSION]["inadmin"] !== $inadmin //Verifica se o usuário tem permissão de admin
-			
+			(bool)$_SESSION[User::SESSION]["inadmin"] !== $inadmin //Verifica se o inadmin não é igual a $inadmin passada no método
 		){
 			
 			//Retorna ao login caso algumas das condições do If sejam satisfeitas
