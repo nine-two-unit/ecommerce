@@ -51,6 +51,7 @@ class Cart extends Model {
 				
 				$cart->setToSession();
 				
+				
 			}
 			
 			
@@ -58,13 +59,14 @@ class Cart extends Model {
 		
 		//Retorna o carrinho se ele for encontrado
 		return $cart;
+	
 	}
 
 	//Método para atribuir o carrinho novo na sessão
 	public function setToSession()
 	{
 		
-		$_SESSION[Cart::SESSION] = $this-getValues();
+		$_SESSION[Cart::SESSION] = $this->getValues();
 		
 	}
 
@@ -83,6 +85,7 @@ class Cart extends Model {
 			$this->setData($results[0]);
 		
 		}
+
 		
 	}
 
@@ -104,7 +107,7 @@ class Cart extends Model {
 		
 	}
 	
-	//Método para salvar os dados no banco
+	//Método para salvar os dados do carrinho no banco
 	public function save()
 	{
 		
@@ -119,7 +122,67 @@ class Cart extends Model {
 			":nrdays"=>$this->getnrdays()
 		]);
 		
-		$this->setData(results[0]);
+		$this->setData($results[0]);
+		
+	}
+	
+	//Método para adicionar o produto no carrinho (recebe uma instância da classe Product)
+	public function addProduct(Product $product)
+	{
+		
+		$sql = new Sql();
+		
+		$sql->query("INSERT INTO tb_cartsproducts (idcart, idproduct) VALUES(:idcart, :idproduct)", [
+			":idcart"=>$this->getidcart(),
+			":idproduct"=>$product->getidproduct()		
+		]);
+		
+	}
+	
+	//Método para remover produtos do carrinho. Passando o objeto produto e variável $all. $all representa todos os produtos do mesmo tipo dentro de um carrinho, false por padrão.
+	public function removeProduct(Product $product, $all = false)
+	{
+		$sql = new Sql();
+		
+		//Se $all é verdadeiro é feito o update do campo dtremoved na tb_cartsproducts
+		if ($all) {
+			
+			$sql->query("UPDATE tb_cartsproducts SET dtremoved = NOW() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL", [
+				":idcart"=>$this->getidcart(),
+				":idproduct"=>$product->getidproduct()
+			]);
+		
+		//Senão, é removido apenas um produto
+		} else {
+			
+			$sql->query("UPDATE tb_cartsproducts SET dtremoved = NOW() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL LIMIT 1", [
+				":idcart"=>$this->getidcart(),
+				":idproduct"=>$product->getidproduct()
+			]);			
+			
+			
+		}
+		
+	}
+	
+	//Método para listagem de produtos no carrinho
+	public function getProducts()
+	{
+		
+		$sql = new Sql();
+		
+		$rows = $sql->select("
+			SELECT b.idproduct, b.desproduct, b.vlprice, b.vlwidth, b.vlheight, b.vllength, b.vlweight, b.desurl, COUNT(*) AS nrqtd, SUM(b.vlprice) AS vltotal 
+			FROM tb_cartsproducts a 
+			INNER JOIN tb_products b ON a.idproduct = b.idproduct 
+			WHERE a.idcart = :idcart AND a.dtremoved IS NULL 
+			GROUP BY b.idproduct, b.desproduct, b.vlprice, b.vlwidth, b.vlheight, b.vllength, b.vlweight, b.desurl 
+			ORDER BY b.desproduct
+		", [
+			":idcart"=>$this->getidcart()
+		]);
+		
+		return Product::checkList($rows);
 		
 	}
 }
