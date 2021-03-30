@@ -12,6 +12,9 @@ class Cart extends Model {
 	//Funciona como ID do carrinho
 	const SESSION = "Cart";
 	
+	//Constante das mensagens de erro do cálculo de frete
+	const SESSION_ERROR = "CartError";
+	
 	//Método para verificar o status do carrinho
 	public static function getFromSession()
 	{
@@ -137,6 +140,8 @@ class Cart extends Model {
 			":idproduct"=>$product->getidproduct()		
 		]);
 		
+		$this->getCalculateTotal();
+		
 	}
 	
 	//Método para remover produtos do carrinho. Passando o objeto produto e variável $all. $all representa todos os produtos do mesmo tipo dentro de um carrinho, false por padrão.
@@ -160,8 +165,9 @@ class Cart extends Model {
 				":idproduct"=>$product->getidproduct()
 			]);			
 			
-			
 		}
+		
+		$this->getCalculateTotal();
 		
 	}
 	
@@ -185,6 +191,167 @@ class Cart extends Model {
 		return Product::checkList($rows);
 		
 	}
+	
+	//Método para retornar o valor total dos itens do carrinho
+	public function getProductsTotals()
+	{
+		
+		$sql = new Sql();
+		
+		$results = $sql->select("
+			SELECT SUM(vlprice) AS vlprice, SUM(vlwidth) AS vlwidth, SUM(vlheight) AS vlheight, SUM(vllength) AS vllength, SUM(vlweight) AS vlweight, COUNT(*) AS nrqtd
+			FROM tb_products a 
+			INNER JOIN tb_cartsproducts b ON  a.idproduct = b.idproduct
+			WHERE b.idcart = :idcart AND dtremoved IS NULL;
+		", [
+			":idcart"=>$this->getidcart()
+		]);
+		
+		if(count($results) > 0){
+			return $results[0];
+		} else {
+			return[];
+		}
+		
+	}
+	
+	public function setFreight($nrzipcode)
+	{
+		
+		$nrzipcode = str_replace("-", "", $nrzipcode);
+		
+		$totals = $this->getProductsTotals();
+		
+		if ($totals["nrqtd"] > 0) {
+			
+			//Altura mínima 2cm
+			if($totals["vlheight"] < 2) $totals["vlheight"] = 2;
+			
+			//Comprimento mínimo 16cm
+			if($totals["vllength"] < 16) $totals["vllength"] = 16;
+			
+			//Função Build query passa a query string em array com as variáveis necessárias
+			$qs = http_build_query([
+				"nCdEmpresa"=>"",
+				"sDsSenha"=>"",
+				"nCdServico"=>"40010",
+				"sCepOrigem"=>"13207780",
+				"sCepDestino"=>$nrzipcode,
+				"nVlPeso"=>$totals["vlweight"],
+				"nCdFormato"=>"1",
+				"nVlComprimento"=>$totals["vllength"],
+				"nVlAltura"=>$totals["vlheight"],
+				"nVlLargura"=>$totals["vlwidth"],
+				"nVlDiametro"=>"5",
+				"sCdMaoPropria"=>"S",
+				"nVlValorDeclarado"=>$totals["vlprice"],
+				"sCdAvisoRecebimento"=>"S"
+			]);
+			
+			$xml = simplexml_load_file("http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo?".$qs);
+			//Retorna um objeto
+			
+			
+			$result = $xml->Servicos->cServico;
+			
+			//Verifica se existem erro retornado do WebService do frete
+			if($result->MsgErro != ""){
+				
+				Cart::setMsgError($result->MsgErro);
+				
+			} else {
+				
+				Cart::clearMsgError();
+				
+			}
+			
+			$this->setnrdays($result->PrazoEntrega);
+			$this->setvlfreight(Cart::formatValueToDecimal($result->Valor));
+			$this->setdeszipcode($nrzipcode);
+			
+			$this->save();
+			
+			return $result;
+			
+		} else {
+			
+			
+		}
+		
+	}
+	
+	//Método para converter valores no formato aceito pelo banco
+	public static function formatValueToDecimal($value):float
+	{
+		
+		$value = str_replace(".", "", $value);
+		return str_replace(",", ".", $value);
+		
+	}
+	
+	//Método para atribuir mensagem de erro ao array $_SESSION
+	public static function setMsgError($msg)
+	{
+		
+		$_SESSION[Cart::SESSION_ERROR] = $msg;
+		
+	}
+	
+	//Método para retornar o erro
+	public static function getMsgError()
+	{
+		
+		$msg = (isset($_SESSION[Cart::SESSION_ERROR])) ? $_SESSION[Cart::SESSION_ERROR] : "";
+		
+		Cart::clearMsgError();
+		
+		return $msg;
+		
+	}
+	
+	//Método para limpar a constante de sessão com o erro
+	public static function clearMsgError()
+	{
+		
+		$_SESSION[Cart::SESSION_ERROR] = NULL;
+		
+	}
+	
+	//Método para atualizar o frete em caso de adição ou remoção
+	public function updateFreight()
+	{
+		
+		if ($this->getdeszipcode() != ""){
+			
+			$this->setFreight($this->getdeszipcode());
+			
+		}
+		
+	}
+	
+	//
+	public function getValues()
+	{
+		
+		$this->getCalculateTotal();
+		
+		return parent::getValues();
+		
+	}
+	
+	//Método para calulcar subtotal e total com frete
+	public function getCalculateTotal()
+	{
+		
+		$this->updateFreight();
+		
+		$totals = $this->getProductsTotals();
+		
+		$this->setvlsubtotal($totals["vlprice"]);
+		$this->setvltotal($totals["vlprice"] + $this->getvlfreight());
+		
+	}
+
 }
 
 ?>
