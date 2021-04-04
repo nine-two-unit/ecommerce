@@ -20,7 +20,8 @@ class User extends Model {
 	//Constante de sessão para erros
 	const ERROR = "UserError";
 	
-	//
+	//Constante de sessão para erros de cadastro
+	const ERROR_REGISTER = "UserErrorRegister";
 	
 	//Método que retorna o objeto usuário se o usuário está logado
 	public static function getFromSession()
@@ -425,7 +426,47 @@ class User extends Model {
 	   ]);
 
     }
+	
+	//Métodos de tratamento de erros no cadastro do login
+	
+	public static function setErrorRegister($msg)
+	{
 		
+		$_SESSION[User::ERROR_REGISTER] = $msg;
+		
+	}
+	
+	public static function getErrorRegister()
+	{
+		
+		$msg = (isset($_SESSION[User::ERROR_REGISTER]) && $_SESSION[User::ERROR_REGISTER]) ? $_SESSION[User::ERROR_REGISTER] : "";
+		
+		User::clearErrorRegister();
+		
+		return $msg;
+		
+	}
+	
+	public static function clearErrorRegister()
+	{
+		
+		$_SESSION[User::ERROR_REGISTER] = NULL;
+		
+	}
+	
+	//Método para checar se o login digitado já existe
+	public static function checkLoginExists($login)
+	{
+		
+		$sql = new Sql();
+		
+		$results = $sql->select("SELECT * FROM tb_users WHERE deslogin = :deslogin", [
+			":deslogin"=>$login
+		]);
+		
+		return (count($results) > 0);
+		
+	}
 }
 
 ?>
