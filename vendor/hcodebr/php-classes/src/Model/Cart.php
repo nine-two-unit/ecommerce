@@ -104,6 +104,7 @@ class Cart extends Model {
 		
 		if (count($results) > 0){
 			
+			//echo "Eis o problema";
 			$this->setData($results[0]);
 		
 		}
@@ -156,6 +157,8 @@ class Cart extends Model {
 				":idcart"=>$this->getidcart(),
 				":idproduct"=>$product->getidproduct()
 			]);
+			
+			$this->clearFreight();
 		
 		//Senão, é removido apenas um produto
 		} else {
@@ -163,9 +166,12 @@ class Cart extends Model {
 			$sql->query("UPDATE tb_cartsproducts SET dtremoved = NOW() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL LIMIT 1", [
 				":idcart"=>$this->getidcart(),
 				":idproduct"=>$product->getidproduct()
-			]);			
+			]);
+			
+			$this->getProducts();
 			
 		}
+		
 		
 		$this->getCalculateTotal();
 		
@@ -188,6 +194,11 @@ class Cart extends Model {
 			":idcart"=>$this->getidcart()
 		]);
 		
+		if(count($rows) === 0){
+			
+			$this->clearFreight();
+			
+		}
 		return Product::checkList($rows);
 		
 	}
@@ -276,6 +287,7 @@ class Cart extends Model {
 		} else {
 			
 			
+			
 		}
 		
 	}
@@ -347,10 +359,22 @@ class Cart extends Model {
 		
 		$totals = $this->getProductsTotals();
 		
-		$this->setvlsubtotal($totals["vlprice"]);
+		$this->setvlsubtotal((float)$totals["vlprice"]);
 		$this->setvltotal($totals["vlprice"] + $this->getvlfreight());
 		
 	}
+	
+	public function clearFreight()
+	{
+		
+		$sql = new Sql();
+		
+		$sql->query("UPDATE tb_carts SET deszipcode = NULL, vlfreight = NULL, nrdays = NULL WHERE idcart = :idcart", [
+			":idcart"=>$this->getidcart()
+		]);
+		
+	}
+
 
 }
 

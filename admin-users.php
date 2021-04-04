@@ -82,7 +82,7 @@ $app->post('/admin/users/create', function(){
 	$user = new User();
 	
 	//Método personalizado para criptografar a senha em hash 
-	$user->hashPass();
+	//$user->hashPass();
 	
 	//Verificação da opção inadmin. Se for definido o valor é 1, senão é 0.
 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
@@ -104,7 +104,7 @@ $app->post('/admin/users/:iduser', function($iduser){
 	$user = new User();
 	
 	//Método personalizado para criptografar a senha em hash 
-	$user->hashPass();
+	//$user->hashPass();
 	
 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
 	

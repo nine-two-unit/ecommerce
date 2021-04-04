@@ -17,6 +17,11 @@ class User extends Model {
 	//2ª Constante segredo da encriptação
 	const SECRET_II = "Pr0ton+Elctr0n+-";
 	
+	//Constante de sessão para erros
+	const ERROR = "UserError";
+	
+	//
+	
 	//Método que retorna o objeto usuário se o usuário está logado
 	public static function getFromSession()
 	{
@@ -28,7 +33,7 @@ class User extends Model {
 			$user->setData($_SESSION[User::SESSION]);
 			
 		}
-		
+			
 		return $user;
 			
 	}
@@ -72,7 +77,17 @@ class User extends Model {
 		$sql = new Sql();
 		
 		//Consulta no login infromado
+		
+		/*
+		
+		Nota: O código abaixo estava sendo utilizado anteriormente, porém no método getUserName() dentro de functions.php o campo deesperson não estava presente no objeto $user. Foi alterada a query de login para carregar o os dados da tabela tb_persons utilizando um INNER JOIN entre o iduser e idperson
+		
 		$results = $sql->select("SELECT * FROM tb_users WHERE deslogin = :LOGIN", array(
+			":LOGIN"=>$login
+		));
+		*/
+
+		$results = $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b USING(idperson) WHERE a.deslogin = :LOGIN", array(
 			":LOGIN"=>$login
 		));
 		
@@ -90,6 +105,13 @@ class User extends Model {
 		{
 			
 			$user = new User();
+			
+			/*
+			Caso hajam erros de codificação no nome do usuário, utilizar a função urf8_encode
+			
+			$data["desperson"] = utf8_encode($data["desperson"]);
+			
+			*/
 			
 			//Método para detectar e separar campos e valores do array recebido da consulta SQL
 			$user->setData($data);
@@ -114,9 +136,20 @@ class User extends Model {
 	public static function verifyLogin($inadmin = true) 
 	{
 		
-		/*if(User::checkLogin($inadmin)){
-			*/
+		if(!User::checkLogin($inadmin)){
 			
+			if($inadmin){
+				header("Location: /admin/login");
+			} else {
+				header("Location: /login");
+			}
+			exit;
+		
+		}
+		/* 
+		#######################################################################
+					Código antigo
+					
 		if(
 			!isset($_SESSION[User::SESSION]) //Se a sessão não foi definida
 			||
@@ -131,6 +164,8 @@ class User extends Model {
 			header("Location: /admin/login");
 			exit;
 		}
+		#######################################################################
+		*/
 		
 	}
 	
@@ -161,7 +196,7 @@ class User extends Model {
 		$results = $sql->select("CALL sp_users_save(:desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)", array(
 			":desperson"=>$this->getdesperson(),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>$this->getdespassword(),
+			":despassword"=>User::hashPass($this->getdespassword()),
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()		
@@ -195,7 +230,7 @@ class User extends Model {
 			":iduser"=>$this->getiduser(),
 			":desperson"=>$this->getdesperson(),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>$this->getdespassword(),
+			":despassword"=>User::hashPass($this->getdespassword()),
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()		
@@ -353,11 +388,41 @@ class User extends Model {
 		));
 	}
 	
+	
+	//Sessão de tratamento de erros
+	
+	public static function setError($msg)
+	{
+		
+		$_SESSION[User::ERROR] = $msg;
+		
+	}
+	
+	public static function getError()
+	{
+		
+		$msg = (isset($_SESSION[User::ERROR]) && $_SESSION[User::ERROR]) ? $_SESSION[User::ERROR] : "";
+		
+		User::clearError();
+		
+		return $msg;
+		
+	}
+	
+	public static function clearError()
+	{
+		
+		$_SESSION[User::ERROR] = NULL;
+		
+	}
+	
 	//Método para criptografar a senha em hash 
-    public static function hashPass()
+    public static function hashPass($password)
     {
         
-        $_POST["despassword"] = password_hash($_POST["despassword"], PASSWORD_BCRYPT, ["cost"=>12]);
+       return password_hash($password, PASSWORD_BCRYPT, [
+			"cost"=>12
+	   ]);
 
     }
 		
