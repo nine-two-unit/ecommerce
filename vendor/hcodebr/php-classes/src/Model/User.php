@@ -254,7 +254,7 @@ class User extends Model {
 	}
 	
 	//Método para recuperação de senha via e-mail	
-	public static function getForgot($email)
+	public static function getForgot($email, $inadmin = true)
 	{
 		
 		//Verifica se o e-mail existe no banco
@@ -301,8 +301,20 @@ class User extends Model {
 					User::SECRET_II					
 				));
 				
-				//Link gerado com ocódigo de recuperação
-				$link = "http://www.electricstar.com.br/admin/forgot/reset?code=$code";
+				//Verifica se o usuário é admin ou comum
+				if($inadmin === true){
+					
+					//Se o $inadmin for true, o link gerado com ocódigo de recuperação da administração é gerado
+					$link = "http://www.electricstar.com.br/admin/forgot/reset?code=$code";
+					
+				} else {
+					
+					//Senão, é gerado o link para usuários comuns
+					$link = "http://www.electricstar.com.br/forgot/reset?code=$code";
+					
+				}
+				
+				
 				
 				//Construção do e-mail utilizando a classe Mailer
 				$mailer = new Mailer($data["desemail"], $data["desperson"], "Redefinir Senha da Electric Star Store", "forgot", array(
