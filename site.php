@@ -351,4 +351,70 @@ $app->post("/forgot/reset", function(){
 	$page->setTpl("forgot-reset-success");
 	
 });
+
+//Rota para a página de perfil
+$app->get("/profile", function(){
+	
+	User::verifyLogin(false);
+	
+	$user = User::getFromSession();
+
+	$page = new Page();
+	
+	$page->setTpl("profile", [
+		"user"=>$user->getValues(),
+		"profileMsg"=>User::getSuccess(),
+		"profileError"=>User::getError()
+	]);
+	
+});
+
+//Rota para alteração dos dados do usuário
+$app->post("/profile", function(){
+	
+	User::verifyLogin(false);
+	
+	if(!isset($_POST["desperson"]) || $_POST["desperson"] === ""){
+		User::setError("Preencha o seu nome.");
+		header("Location: /profile");
+		exit;
+	}
+
+	if(!isset($_POST["desemail"]) || $_POST["desemail"] === ""){
+		User::setError("Preencha o seu e-mail.");
+		header("Location: /profile");
+		exit;		
+	}
+	
+	$user = User::getFromSession();
+	
+	if ($_POST["desemail"] !== $user->getdesemail()){
+		
+		if (User::checkLoginExists($_POST["desemail"]) === true){
+			
+			User::setError("Este endereço de e-mail já está cadastrado.");
+			
+		}
+		
+	}
+	
+	//Mantém a opção inadmin e senha retornadas do banco
+	$_POST["inadmin"] = $user->getinadmin();
+	$_POST["despassword"] = $user->getdespassword();
+	$_POST["deslogin"] = $_POST["desemail"];
+	
+	//Atualiza os campos com os novos valores
+	$_SESSION["User"]["desperson"] = $_POST["desperson"];
+	$_SESSION["User"]["desemail"] = $_POST["desemail"];
+	$_SESSION["User"]["nrphone"] = $_POST["nrphone"];
+		
+	$user->setData($_POST);
+	
+	$user->update();
+
+	User::setSuccess("Dados alterados com sucesso!");
+	
+	header("Location: /profile");
+	exit;
+});
 ?>

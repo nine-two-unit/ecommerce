@@ -65,6 +65,8 @@ $app->get('/admin/users/:iduser', function($iduser){ //Passando o ID de usuário
 	$user = new User();
 	
 	$user->get((int)$iduser);
+	
+	//var_dump($user);
 
 	$page = new PageAdmin();
 	
@@ -81,11 +83,11 @@ $app->post('/admin/users/create', function(){
 	
 	$user = new User();
 	
-	//Método personalizado para criptografar a senha em hash 
-	//$user->hashPass();
-	
 	//Verificação da opção inadmin. Se for definido o valor é 1, senão é 0.
 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
+	
+	//Método personalizado para criptografar a senha em hash 
+	$user->hashPassGet($_POST["despassword"]);
 	
 	$user->SetData($_POST);
 	
@@ -102,13 +104,13 @@ $app->post('/admin/users/:iduser', function($iduser){
 	User::verifyLogin();
 	
 	$user = new User();
-	
-	//Método personalizado para criptografar a senha em hash 
-	//$user->hashPass();
-	
+
 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
 	
 	$user->get((int)$iduser);
+	
+	//Método personalizado para criptografar a senha em hash
+	$user->hashPassGet($_POST["despassword"]);
 	
 	$user->setData($_POST);
 	

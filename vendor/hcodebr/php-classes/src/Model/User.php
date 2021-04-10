@@ -23,6 +23,9 @@ class User extends Model {
 	//Constante de sessão para erros de cadastro
 	const ERROR_REGISTER = "UserErrorRegister";
 	
+	//Constante de sessão para mensagens gerais
+	const SUCCESS = "UserSuccess";
+	
 	//Método que retorna o objeto usuário se o usuário está logado
 	public static function getFromSession()
 	{
@@ -197,7 +200,8 @@ class User extends Model {
 		$results = $sql->select("CALL sp_users_save(:desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)", array(
 			":desperson"=>$this->getdesperson(),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>User::hashPass($this->getdespassword()),
+			//":despassword"=>User::hashPass($this->getdespassword()),
+			":despassword"=>$this->getdespassword(),
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()		
@@ -231,7 +235,8 @@ class User extends Model {
 			":iduser"=>$this->getiduser(),
 			":desperson"=>$this->getdesperson(),
 			":deslogin"=>$this->getdeslogin(),
-			":despassword"=>User::hashPass($this->getdespassword()),
+			//":despassword"=>User::hashPass($this->getdespassword()),
+			":despassword"=>$this->getdespassword(),
 			":desemail"=>$this->getdesemail(),
 			":nrphone"=>$this->getnrphone(),
 			":inadmin"=>$this->getinadmin()		
@@ -429,7 +434,8 @@ class User extends Model {
 		
 	}
 	
-	//Método para criptografar a senha em hash 
+	
+	//Método para criptografar a senha em hash (utilizado nas páginas 'forgot')
     public static function hashPass($password)
     {
         
@@ -439,6 +445,53 @@ class User extends Model {
 
     }
 	
+	//Método para criptografar a senha em hash 
+    /*
+	public static function hashPass()
+    {
+        
+        $_POST["despassword"] = password_hash($_POST["despassword"], PASSWORD_BCRYPT, ["cost"=>12]);
+
+    }	*/
+	
+	//HASH PASSWORD TESTE (POST explícito na rota)
+	/*public function hashPass($password)
+	{
+		
+		if($password != $this->getdespassword()){
+			
+			return password_hash($password, PASSWORD_BCRYPT, [
+				"cost"=>12
+			]);
+			
+		} else {
+			
+			return $password;
+			
+		}
+		
+	}*/
+	
+	//Método para criptografar a senha.
+	//No código anterior, a cada alteração de outros campos do usuário, o hash é criptografado novamente gerando uma nova senha.
+	//O método pega a senha recebida no $_POST e compara com a senha no objeto antes da execução do SetData(). Se houver diferença é feito o hash da senha digitada armazenada no $_POST.
+	//caso  a senha esteja igual, é retornado o mesmo valor armazenado no $_POST
+	public function hashPassGet($password)
+	{
+		
+		if($password != $this->getdespassword()){
+			
+			$_POST["despassword"] = password_hash($password, PASSWORD_BCRYPT, [
+				"cost"=>12
+			]);
+			
+		} else {
+			
+			return $_POST["despassword"] = $password;
+			
+		}
+		
+	}	
 	//Métodos de tratamento de erros no cadastro do login
 	
 	public static function setErrorRegister($msg)
@@ -479,6 +532,34 @@ class User extends Model {
 		return (count($results) > 0);
 		
 	}
+	
+	//Métodos de tratamento de mensagens
+	
+	public static function setSuccess($msg)
+	{
+		
+		$_SESSION[User::SUCCESS] = $msg;
+		
+	}
+	
+	public static function getSuccess()
+	{
+		
+		$msg = (isset($_SESSION[User::SUCCESS]) && $_SESSION[User::SUCCESS]) ? $_SESSION[User::SUCCESS] : "";
+		
+		User::clearSuccess();
+		
+		return $msg;
+		
+	}
+	
+	public static function clearSuccess()
+	{
+		
+		$_SESSION[User::SUCCESS] = NULL;
+		
+	}
+	
 }
 
 ?>
