@@ -27,6 +27,15 @@ class Cart extends Model {
 			//Se o carrinho existe, o mesmo é carregado
 			$cart->get((int)$_SESSION[Cart::SESSION]["idcart"]);
 			
+			//Verifica se há um usuário logado e retorna o ID do usuário
+			if(User::checkLogin(false)){
+				
+				$user = User::getFromSession();
+				
+				$_SESSION[Cart::SESSION]["iduser"] = $user->getiduser();
+				
+			}
+			
 		} else {
 			
 			//Se não existe, é feita a tentativa de carregar o do sessionid
