@@ -34,6 +34,8 @@ class Cart extends Model {
 				
 				$_SESSION[Cart::SESSION]["iduser"] = $user->getiduser();
 				
+				$cart->setiduser($_SESSION[Cart::SESSION]["iduser"]);
+				
 			}
 			
 		} else {
