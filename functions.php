@@ -1,6 +1,7 @@
 <?php
 
 use \Hcode\Model\User;
+use \Hcode\Model\Cart;
 
 //Função para formatar preço
 function formatPrice($vlprice)
@@ -27,6 +28,43 @@ function getUserName()
 	$user = User::getFromSession();
 	
 	return $user->getdesperson();
+	
+}
+
+//Função para retornar o número de produtos do carrinho
+function getCartNrQtd()
+{
+	if(isset($_SESSION[Cart::SESSION])){
+	
+		$cart = Cart::getFromSession();
+		
+		$totals = $cart->getProductsTotals();
+		
+		return $totals["nrqtd"];
+
+	} else {
+		
+		return "0";
+		
+	}
+}
+
+//Função para retornar o valor dos produtos no carrinho
+function getCartVlSubTotal()
+{
+	
+	if(isset($_SESSION[Cart::SESSION])){
+		
+		$cart = Cart::getFromSession();
+		
+		$totals = $cart->getProductsTotals();
+
+		return formatPrice($totals["vlprice"]);
+	
+	} else {
+		
+		return "0,00";
+	}
 	
 }
 ?>

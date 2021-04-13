@@ -21,7 +21,12 @@ class Order extends Model {
 		]);
 		
 		if (count($results) > 0){
-			$this->setData($results[0]);			
+			$this->setData($results[0]);
+			
+			//Seta o campo isopened com o valor de 0 (false)
+			$sql->query("UPDATE tb_carts SET isopened = 0 WHERE idcart = :idcart", [
+				":idcart"=>$this->getidcart()
+			]);
 		}
 		
 	}

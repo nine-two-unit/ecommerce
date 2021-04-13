@@ -41,8 +41,14 @@ class Address extends Model {
 	{
 		
 		$data = Address::getCEP($nrcep);
-		
-		if(isset($data["logradouro"]) && $data["logradouro"]){
+
+		if(isset($data["erro"]) && $data["erro"] === true){
+			
+			$msg = "Não há informações para o CEP consultado. Digite um CEP válido.";
+
+			Address::setMsgError($msg);
+			
+		} else {
 			
 			$this->setdesaddress($data["logradouro"]);
 			$this->setdescomplement($data["complemento"]);

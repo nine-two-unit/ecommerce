@@ -22,7 +22,7 @@ class Cart extends Model {
 		$cart = new Cart();
 		
 		//Verifica se o carrinho já está criado e se o idcart é maior do que zero (o cast para int vira zero se a variável estiver vazia)
-		if(isset($_SESSION[Cart::SESSION]) && (int)$_SESSION[Cart::SESSION]["idcart"] > 0 && (int)$_SESSION[Cart::SESSION]["isopened"] === 1){
+		if(isset($_SESSION[Cart::SESSION]) && (int)$_SESSION[Cart::SESSION]["idcart"] > 0){
 			
 			//Se o carrinho existe, o mesmo é carregado
 			$cart->get((int)$_SESSION[Cart::SESSION]["idcart"]);
@@ -46,9 +46,6 @@ class Cart extends Model {
 			//Se o carrinho não existe, então ele é criado com o session_id
 			if (!(int)$cart->getidcart() > 0){
 				
-				//$cart->setNewCart();
-			
-				
 				$data = [
 					"dessessionid"=>session_id()
 				];
@@ -63,10 +60,11 @@ class Cart extends Model {
 				}
 				
 				$cart->setData($data);
-
+				
 				$cart->save();
 				
 				$cart->setToSession();
+				
 				
 			}
 			
@@ -74,49 +72,16 @@ class Cart extends Model {
 		}
 		
 		//Retorna o carrinho se ele for encontrado
-		//var_dump($_SESSION[Cart::SESSION]);
-		//exit;
 		return $cart;
 	
 	}
-	/*
-	public function setNewCart()
-	{
-		
-		$cart = new Cart();
-
-		$data = [
-			"dessessionid"=>session_id()
-		];
-		
-		//Verifica se há um usuário logado e retorna o ID do usuário
-		if(User::checkLogin(false)){
-			
-			$user = User::getFromSession();
-			
-			$data["iduser"] = $user->getiduser();
-			
-		}
-		
-		$cart->setData($data);
-
-		$cart->save();
-		
-		$cart->setToSession();
-		
-		return $cart;
-		//$cart->getFromSession();
-		//var_dump($cart);
-		//exit;
-
-	}*/
 
 	//Método para atribuir o carrinho novo na sessão
 	public function setToSession()
 	{
 		
 		$_SESSION[Cart::SESSION] = $this->getValues();
-
+		
 	}
 
 	//Método  sendo recuperado atráves do sessionid
@@ -125,7 +90,7 @@ class Cart extends Model {
 		
 		$sql = new Sql();
 		
-		$results = $sql->select("SELECT * FROM tb_carts WHERE dessessionid = :dessessionid AND isopened = 1", [
+		$results = $sql->select("SELECT * FROM tb_carts WHERE dessessionid = :dessessionid", [
 			":dessessionid"=>session_id()		
 		]);
 		
@@ -173,7 +138,7 @@ class Cart extends Model {
 		]);
 		
 		$this->setData($results[0]);
-
+		
 	}
 	
 	//Método para adicionar o produto no carrinho (recebe uma instância da classe Product)
@@ -186,7 +151,7 @@ class Cart extends Model {
 			":idcart"=>$this->getidcart(),
 			":idproduct"=>$product->getidproduct()		
 		]);
-
+		
 		$this->getCalculateTotal();
 		
 	}

@@ -89,12 +89,8 @@ $app->get("/cart", function(){
 	
 	$cart = Cart::getFromSession();
 	
-	//var_dump($cart->productsOnCart);
-	
-	//var_dump($cart->getValues());
+	$cart->getProductsTotals();
 
-	//exit;
-	
 	$page = new Page();
 	
 	$page->setTpl("cart", [
@@ -102,12 +98,9 @@ $app->get("/cart", function(){
 		"products"=>$cart->getProducts(),
 		"error"=>Cart::getMsgError()
 	]);
-	
-		var_dump($cart);
-		echo "<br><br>";
-		var_dump($_SESSION[Cart::SESSION]);
+
+	var_dump($_SESSION);
 	exit;
-	
 });
 
 //Rota para adicionar produtos no carrinho de compras
@@ -119,6 +112,9 @@ $app->get("/cart/:idproduct/add", function($idproduct){
 	
 	$cart = Cart::getFromSession();
 	
+	//echo "exec: <br>";
+	//var_dump($cart);
+	//exit;
 	$qtd = (isset($_GET["qtd"])) ? (int)$_GET["qtd"] : 1;
 	
 	for ($i = 0; $i < $qtd; $i++){
@@ -181,7 +177,7 @@ $app->post("/cart/freight", function(){
 
 //Rota para finalização de compras
 $app->get("/checkout", function(){
-	
+
 	User::verifyLogin(false);
 	
 	$address = new Address();
@@ -199,6 +195,13 @@ $app->get("/checkout", function(){
 	if(isset($_GET["zipcode"])){
 		
 		$_GET["zipcode"] = str_replace("-", "", $_GET["zipcode"]);
+		
+		if(strlen($_GET["zipcode"]) < 8 || strlen($_GET["zipcode"]) > 8){
+			
+			Address::setMsgError("CEP inválido. Digite um CEP válido para prosseguir.");
+			header("Location: /checkout");
+			exit;
+		}
 		
 		$address->loadFromCEP($_GET["zipcode"]);
 		
@@ -229,7 +232,7 @@ $app->get("/checkout", function(){
 		"error"=>Address::getMsgError()
 	]);
 	
-	//var_dump($totais);
+	var_dump($address);
 });
 
 //Rota para envio
@@ -287,6 +290,13 @@ $app->post("/checkout", function(){
 	$cart = Cart::getFromSession();
 
 	$cart->getCalculateTotal();
+	
+	if($cart->getvltotal() <= 0){
+		
+		Cart::setMsgError("Não há itens no carrinho!");
+		header("Location: /cart");
+		exit;
+	}
 
 	$order = new Order();
 	
@@ -299,6 +309,8 @@ $app->post("/checkout", function(){
 	]);
 	
 	$order->save();
+	
+	unset($_SESSION[Cart::SESSION]);
 	
 	header("Location: /order/".$order->getidorder());
 	exit;
@@ -628,5 +640,47 @@ $app->get("/boleto/:idorder", function($idorder){
 	
 });
 
+$app->get("/profile/orders", function(){
+	
+	User::verifyLogin(false);
+	
+	$user = User::getFromSession();
+	
+	$page = new Page();
+	
+	$page->setTpl("profile-orders", [
+		"orders"=>$user->getOrders()
+	]);
+	
+	var_dump($_SESSION);
+	
+});
 
+$app->get("/profile/orders/:idorder", function($idorder){
+	
+	User::verifyLogin(false);
+	
+	$order = new Order();
+	
+	$order->get((int)$idorder);
+	
+	$cart = new Cart();
+	
+	$cart->get((int)$order->getidcart());
+	
+	$cart->getCalculateTotal();
+	
+	/*
+	var_dump($cart);
+	exit;*/
+	
+	$page = new Page();
+	
+	$page->setTpl("profile-orders-detail", [
+		"order"=>$order->getValues(),
+		"cart"=>$cart->getValues(),
+		"products"=>$cart->getProducts()
+	]);
+	
+});
 ?>

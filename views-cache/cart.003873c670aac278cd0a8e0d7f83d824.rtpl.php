@@ -24,7 +24,8 @@
 							<?php if( $error != '' ){ ?>
 
                             <div class="alert alert-danger" role="alert">
-                            Error!
+                           <?php echo htmlspecialchars( $error, ENT_COMPAT, 'UTF-8', FALSE ); ?>
+
                             </div>
 							<?php } ?>
 
