@@ -476,6 +476,7 @@ class User extends Model {
 	//No código anterior, a cada alteração de outros campos do usuário, o hash é criptografado novamente gerando uma nova senha.
 	//O método pega a senha recebida no $_POST e compara com a senha no objeto antes da execução do SetData(). Se houver diferença é feito o hash da senha digitada armazenada no $_POST.
 	//caso  a senha esteja igual, é retornado o mesmo valor armazenado no $_POST
+	
 	public function hashPassGet($password)
 	{
 		
@@ -492,6 +493,7 @@ class User extends Model {
 		}
 		
 	}	
+	
 	//Métodos de tratamento de erros no cadastro do login
 	
 	public static function setErrorRegister($msg)
