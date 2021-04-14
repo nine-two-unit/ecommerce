@@ -13,6 +13,13 @@ function formatPrice($vlprice)
 	
 }
 
+function formatDate($date)
+{
+	
+	return date("d/m/Y", strtotime($date));
+	
+}
+
 //Função de checagem do login, utilizada pelo RainTPL
 function checkLogin($inadmin = true)
 {
