@@ -214,6 +214,7 @@ $app->get("/checkout", function(){
 	}
 	
 	if(!$address->getdesaddress()) $address->setdesaddress("");
+	if(!$address->getdesnumber()) $address->setdesnumber("");
 	if(!$address->getdescomplement()) $address->setdescomplement("");
 	if(!$address->getdesdistrict()) $address->setdesdistrict("");
 	if(!$address->getdescity()) $address->setdescity("");
@@ -230,7 +231,7 @@ $app->get("/checkout", function(){
 		"error"=>Address::getMsgError()
 	]);
 	
-	var_dump($address);
+	//var_dump($address);
 });
 
 //Rota para envio
