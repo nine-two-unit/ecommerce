@@ -250,6 +250,12 @@ $app->post("/checkout", function(){
 		header("Location: /checkout");
 		exit;
 	}
+
+	if(!isset($_POST["desnumber"]) || $_POST["desnumber"] === ""){
+		Address::setMsgError("Informe o número.");
+		header("Location: /checkout");
+		exit;
+	}
 	
 	if(!isset($_POST["desdistrict"]) || $_POST["desdistrict"] === ""){
 		Address::setMsgError("Informe o bairro.");
@@ -309,12 +315,80 @@ $app->post("/checkout", function(){
 	
 	$order->save();
 	
-	unset($_SESSION[Cart::SESSION]);
+	//unset($_SESSION[Cart::SESSION]);
+	//unset($cart);
 	
-	header("Location: /order/".$order->getidorder());
+	switch ((int)$_POST["payment-method"]){
+		
+		case 1:
+		unset($_SESSION[Cart::SESSION]);
+		unset($cart);
+		header("Location: /order/".$order->getidorder());
+		break;
+		
+		case 2:
+		header("Location: /order/".$order->getidorder()."/paypal");
+		break;
+		
+	}
+	
+	
 	exit;
 	
 });
+
+$app->get("/order/:idorder/paypal", function($idorder){
+	
+	User::verifyLogin(false);
+	
+	$order = new Order();
+	
+	$order->get((int)$idorder);
+	
+	$cart = $order->getCart();
+	
+	$page = new Page([
+		"header"=>false,
+		"footer"=>false
+	]);
+	
+	$page->setTpl("payment-paypal", [
+		"order"=>$order->getValues(),
+		"cart"=>$cart->getValues(),
+		"products"=>$cart->getProducts(),
+	]);
+	
+});
+
+//Rota para pagamento com PagSeguro (desativada)
+/*
+$app->get("/order/:idorder/pagseguro", function($idorder){
+	
+	User::verifyLogin(false);
+	
+	$order = new Order();
+	
+	$order->get((int)$idorder);
+	
+	$cart = $order->getCart();
+	
+	$page = new Page([
+		"header"=>false,
+		"footer"=>false
+	]);
+	
+	$page->setTpl("payment-pagseguro", [
+		"order"=>$order->getValues(),
+		"cart"=>$cart->getValues(),
+		"products"=>$cart->getProducts(),
+		"phone"=>[
+			"areaCode"=>substr($order->getnrphone(), 0, 2),
+			"number"=>substr($order->getnrphone(), 2, strlen($order->getnrphone()))
+		]
+	]);
+	
+});
+*/
 
 //Rota para login do usuário
 $app->get("/login", function(){
